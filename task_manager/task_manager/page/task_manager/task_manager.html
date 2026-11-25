@@ -1,0 +1,206 @@
+<!--
+	Dashboard shell.
+
+	Three rules apply to every template in this folder:
+
+	1. No apostrophes or single quotes, anywhere, including in prose. Frappe
+	   wraps each compiled template in single quotes and its escape step is a
+	   discarded no-op in both build.py and microtemplate.js, so one apostrophe
+	   turns the whole page script into a syntax error. Write "do not", never
+	   the contraction.
+
+	2. A double-brace interpolation does NOT escape. It compiles to a raw
+	   push. Every value interpolated here has already been escaped by
+	   escape_html in task_manager.js, which is the single choke point.
+
+	3. Do not write a template tag inside a comment, not even as an example.
+	   microtemplate.js does not skip HTML comments -- it compiles the whole
+	   file as one string, so a brace pair in prose becomes a real
+	   interpolation and throws at render.
+-->
+<div class="task-manager">
+
+	<header class="tm-header">
+		<!--
+			The decoration gets its own clipping box. The header itself must
+			NOT clip, or it cuts off the profile panel that hangs below its
+			bottom edge.
+		-->
+		<span class="tm-decor" aria-hidden="true">
+			<span class="tm-orb tm-orb-1"></span>
+			<span class="tm-orb tm-orb-2"></span>
+		</span>
+
+		<div class="tm-header-text">
+			<p class="tm-date" data-date></p>
+			<h2 class="tm-greeting" data-greeting>&nbsp;</h2>
+			<p class="tm-summary" data-summary></p>
+		</div>
+
+		<div class="tm-header-actions">
+			<!--
+				The toggle names the state it will move you to rather than the
+				one you are in, and the icon follows: a moon while you are in
+				day. Both marks are in the markup and the stylesheet shows
+				one, so the right icon is in the first paint.
+			-->
+			<button
+				class="tm-icon-btn"
+				type="button"
+				data-action="theme"
+				data-theme-toggle
+				aria-pressed="false"
+				aria-label="Switch to night mode"
+			>
+				<svg class="tm-ico tm-ico-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+					<path d="M20.2 14.9A8.6 8.6 0 0 1 9.1 3.8a8.6 8.6 0 1 0 11.1 11.1Z" />
+				</svg>
+				<svg class="tm-ico tm-ico-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+					<circle cx="12" cy="12" r="4.1" />
+					<g class="tm-rays">
+						<path d="M12 2.2v2.4" />
+						<path d="M12 19.4v2.4" />
+						<path d="M2.2 12h2.4" />
+						<path d="M19.4 12h2.4" />
+						<path d="M5.1 5.1l1.7 1.7" />
+						<path d="M17.2 17.2l1.7 1.7" />
+						<path d="M18.9 5.1l-1.7 1.7" />
+						<path d="M6.8 17.2l-1.7 1.7" />
+					</g>
+				</svg>
+			</button>
+
+			<button class="tm-cta" type="button" data-action="oldest" data-oldest hidden>
+				Start with the oldest &rarr;
+			</button>
+
+			<div class="tm-who" data-profile></div>
+		</div>
+	</header>
+
+	<section class="tm-stats" data-kpis></section>
+
+	<!--
+		Row A. The left column is two cards that each grow, the right is one
+		that grows, so all three close on the same bottom line however long
+		the task list runs. That is the whole fix for the donut floating at
+		the top of a short card.
+	-->
+	<div class="tm-row-a">
+
+		<div class="tm-col">
+
+			<section class="tm-card tm-card-grow">
+				<div class="tm-strip">
+					<span class="tm-strip-tile" aria-hidden="true">
+						<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9h-9Z" /><path d="M14.5 2.5A9 9 0 0 1 21.5 9.5h-7Z" /></svg>
+					</span>
+					<div class="tm-strip-text">
+						<h3 class="tm-strip-title">My workload</h3>
+						<p class="tm-strip-sub">Share of open items</p>
+					</div>
+					<div class="tm-total-wrap">
+						<span class="tm-total" data-workload-total>&mdash;</span>
+						<span class="tm-total-label">open</span>
+					</div>
+				</div>
+				<div class="tm-workload">
+					<div class="tm-donut-wrap">
+						<svg class="tm-donut" viewBox="0 0 168 168" data-workload-donut role="img" aria-label="Workload by list"></svg>
+						<div class="tm-donut-centre">
+							<span class="tm-donut-total" data-donut-total>&mdash;</span>
+							<span class="tm-donut-label">open items</span>
+						</div>
+					</div>
+					<ul class="tm-legend" data-workload-legend></ul>
+				</div>
+			</section>
+
+			<section class="tm-card tm-card-grow">
+				<div class="tm-strip">
+					<span class="tm-strip-tile" aria-hidden="true">
+						<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+					</span>
+					<div class="tm-strip-text">
+						<h3 class="tm-strip-title">Workload breakdown</h3>
+						<p class="tm-strip-sub">Items, share and the longest wait</p>
+					</div>
+				</div>
+				<div class="tm-table-wrap">
+					<table class="tm-table">
+						<thead>
+							<tr>
+								<th scope="col">List</th>
+								<th scope="col" class="tm-num">Items</th>
+								<th scope="col" class="tm-num">Share</th>
+								<th scope="col" class="tm-num">Oldest</th>
+							</tr>
+						</thead>
+						<tbody data-workload-table></tbody>
+					</table>
+				</div>
+			</section>
+
+		</div>
+
+		<section class="tm-card tm-card-grow">
+			<!--
+				"Stuck after you" is a statement about the list below it, so
+				it rides above the tabs rather than taking a card of its own.
+			-->
+			<div data-stuck-strip></div>
+
+			<div class="tm-tabbar">
+				<div class="tm-tabs" role="tablist" aria-label="Approval lists">
+					<button class="tm-tab" type="button" role="tab" data-tab="needs_action">
+						<span>Needs my approval</span>
+						<span class="tm-tab-count" data-tab-count-needs_action></span>
+					</button>
+					<button class="tm-tab" type="button" role="tab" data-tab="approved_by_me">
+						<span>Stuck after me</span>
+						<span class="tm-tab-count" data-tab-count-approved_by_me></span>
+					</button>
+				</div>
+				<p class="tm-tab-hint" data-tab-hint></p>
+			</div>
+
+			<div class="tm-skeleton" data-skeleton>
+				<div class="tm-skel"></div>
+				<div class="tm-skel"></div>
+				<div class="tm-skel"></div>
+				<div class="tm-skel"></div>
+			</div>
+			<div class="tm-grow" data-rows></div>
+			<div class="tm-pager" data-rows-pager hidden></div>
+		</section>
+
+	</div>
+
+	<section class="tm-card">
+		<div class="tm-strip tm-strip-orange">
+			<span class="tm-strip-tile" aria-hidden="true">
+				<svg viewBox="0 0 24 24"><path d="M21.5 2.5 11 13M21.5 2.5l-6.8 19-3.7-8.5L2.5 10.3Z" /></svg>
+			</span>
+			<div class="tm-strip-text">
+				<h3 class="tm-strip-title">Your requests</h3>
+				<p class="tm-strip-sub" data-requests-note></p>
+			</div>
+			<span class="tm-count-chip tm-chip-orange" data-requests-chip></span>
+		</div>
+		<div class="tm-table-scroll">
+			<table class="tm-req-table">
+				<thead>
+					<tr>
+						<th scope="col">Request</th>
+						<th scope="col">Status</th>
+						<th scope="col">Step</th>
+						<th scope="col" class="tm-num">Waiting</th>
+					</tr>
+				</thead>
+				<tbody data-requests></tbody>
+			</table>
+		</div>
+		<div class="tm-pager tm-pager-orange" data-requests-pager hidden></div>
+	</section>
+
+</div>

@@ -1,0 +1,1918 @@
+/* Copyright (c) 2026, MicroCRISPR and contributors
+ * For license information, please see license.txt
+ *
+ * Task Manager dashboard.
+ *
+ * Tokens are declared on the page container rather than on `.task-manager`,
+ * because the page ground has to paint the container too and a custom
+ * property set on a descendant cannot reach its own ancestor.
+ *
+ * Status colour -- red, amber, green, orange -- appears only on dots, chips,
+ * icon tiles, tinted rows and charts. Purple never stands in for it.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+/* ====================================================================== */
+/* Tokens                                                                 */
+/* ====================================================================== */
+
+.page-container[data-page-route="task-manager"],
+.page-container[data-page-route="task-manager"][data-tm-theme="light"] {
+	--page-bg: #f5f3ff;
+	--header-bg: #e4dafc;
+	--header-border: #d6c9f9;
+	--primary: #4338ca;
+
+	--purple-50: #f5f3ff;
+	--purple-100: #ede9fe;
+	--purple-200: #ddd6fe;
+	--purple-300: #c4b5fd;
+	--purple-700: #4c3ba8;
+	--purple-900: #1e1450;
+
+	--text: #16162a;
+	--text-muted: #5e5e73;
+
+	--blue: #2f55d4;
+	--blue-bg: #eef3ff;
+	--blue-border: #d4e0ff;
+	--blue-label: #233f9e;
+	--blue-num: #1b2f78;
+
+	--orange: #ea6a2a;
+	--orange-bg: #fff2ea;
+	--orange-border: #ffd9c2;
+	--orange-label: #9a3412;
+	--orange-num: #7c2d12;
+
+	--amber: #e3a008;
+	--amber-bg: #fff8e1;
+	--amber-border: #fce7a6;
+	--amber-label: #854d0e;
+	--amber-num: #713f12;
+	--amber-chip: #fde68a;
+
+	--green: #16a34a;
+	--green-bg: #eaf8f0;
+	--green-border: #c6ebd5;
+	--green-label: #166534;
+	--green-num: #14532d;
+
+	--red: #d92d20;
+	--red-bg: #fee4e2;
+	--red-text: #b42318;
+	--alert-bg: #fff1ef;
+	--alert-border: #fcd3cd;
+
+	--shadow: 0 4px 18px rgba(46, 36, 150, 0.06);
+	--shadow-lift: 0 10px 26px rgba(46, 36, 150, 0.13);
+
+	/* Shades the spec gives inline rather than as tokens. Collected here so
+	 * a change lands in one place instead of eight. */
+	--date-ink: #6d5bb8;
+	--summary-ink: #4a3f7a;
+	--queue-head-bg: #f1efff;
+	--queue-head-border: #e3dffb;
+	--queue-title: #2e2496;
+	--queue-sub: #5b5390;
+	--queue-foot-bg: #faf9ff;
+	--step-todo: #e4e4ee;
+	--todo-sub: #8a5a1e;
+	--alert-title: #7a1a12;
+	--alert-hint: #6b3a34;
+	--stuck-text: #2f5a40;
+	--primary-dark: #2e2496;
+	--muted-2: #6b6b80;
+	--orange-soft: #fffaf6;
+	--orange-line: #ffe7d9;
+	--step-todo-2: #e4e4ee;
+	--donut-track: #f1effa;
+	--ages-bg: #fcfbff;
+	--req-head-bg: #fffaf6;
+
+	/* The desk`s own names, retargeted so nothing inside this page has to
+	 * know it is being themed. */
+	--card-bg: #ffffff;
+	--border-color: var(--purple-200);
+	--text-color: var(--text);
+	--border-radius-full: 999px;
+
+	background: var(--page-bg);
+}
+
+/* The night set. The spec names a light palette only; night is kept because
+ * the page ships with a working switch and removing it would be a
+ * regression. Every token above is restated rather than allowed to leak. */
+@media (prefers-color-scheme: dark) {
+	.page-container[data-page-route="task-manager"]:not([data-tm-theme="light"]) {
+		--page-bg: #17132b;
+		--header-bg: #2b2250;
+		--header-border: #3a2f66;
+		--primary: #7a6bf0;
+
+		--purple-50: #1f1a38;
+		--purple-100: #2a2348;
+		--purple-200: #3a3163;
+		--purple-300: #6f5fc0;
+		--purple-700: #c3b7f0;
+		--purple-900: #f2eeff;
+
+		--text: #f2effd;
+		--text-muted: #a99fd0;
+
+		--blue: #6f9af5;
+		--blue-bg: #1c2545;
+		--blue-border: #2e3c6c;
+		--blue-label: #a9c2fb;
+		--blue-num: #cdddff;
+
+		--orange: #f4915c;
+		--orange-bg: #38231a;
+		--orange-border: #5a3826;
+		--orange-label: #f6b48a;
+		--orange-num: #fbd6bf;
+
+		--amber: #f2bb3a;
+		--amber-bg: #352c14;
+		--amber-border: #574721;
+		--amber-label: #f3cf7e;
+		--amber-num: #f8e3b4;
+		--amber-chip: #574721;
+
+		--green: #4ecb83;
+		--green-bg: #152f20;
+		--green-border: #1f4a31;
+		--green-label: #8fe0ad;
+		--green-num: #c3f0d4;
+
+		--red: #f07a70;
+		--red-bg: #3a1c1a;
+		--red-text: #ffb4ad;
+		--alert-bg: #39201d;
+		--alert-border: #5a2f2a;
+
+		--shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+		--shadow-lift: 0 10px 26px rgba(0, 0, 0, 0.46);
+
+		--date-ink: #bdaef0;
+		--summary-ink: #cabfea;
+		--queue-head-bg: #252046;
+		--queue-head-border: #342c5e;
+		--queue-title: #d9d2ff;
+		--queue-sub: #ab9fdb;
+		--queue-foot-bg: #221d40;
+		--step-todo: #3a3163;
+		--todo-sub: #d7b579;
+		--alert-title: #ffc2bb;
+		--alert-hint: #e8b2aa;
+		--stuck-text: #a7dcbd;
+		--primary-dark: #d9d2ff;
+		--muted-2: #a99fd0;
+		--orange-soft: #2c2042;
+		--orange-line: #4a2f22;
+		--step-todo-2: #3a3163;
+		--donut-track: #2a2348;
+		--ages-bg: #1e1939;
+		--req-head-bg: #2c2042;
+
+		--card-bg: #221c3c;
+	}
+}
+
+.page-container[data-page-route="task-manager"][data-tm-theme="dark"] {
+	--page-bg: #17132b;
+	--header-bg: #2b2250;
+	--header-border: #3a2f66;
+	--primary: #7a6bf0;
+
+	--purple-50: #1f1a38;
+	--purple-100: #2a2348;
+	--purple-200: #3a3163;
+	--purple-300: #6f5fc0;
+	--purple-700: #c3b7f0;
+	--purple-900: #f2eeff;
+
+	--text: #f2effd;
+	--text-muted: #a99fd0;
+
+	--blue: #6f9af5;
+	--blue-bg: #1c2545;
+	--blue-border: #2e3c6c;
+	--blue-label: #a9c2fb;
+	--blue-num: #cdddff;
+
+	--orange: #f4915c;
+	--orange-bg: #38231a;
+	--orange-border: #5a3826;
+	--orange-label: #f6b48a;
+	--orange-num: #fbd6bf;
+
+	--amber: #f2bb3a;
+	--amber-bg: #352c14;
+	--amber-border: #574721;
+	--amber-label: #f3cf7e;
+	--amber-num: #f8e3b4;
+	--amber-chip: #574721;
+
+	--green: #4ecb83;
+	--green-bg: #152f20;
+	--green-border: #1f4a31;
+	--green-label: #8fe0ad;
+	--green-num: #c3f0d4;
+
+	--red: #f07a70;
+	--red-bg: #3a1c1a;
+	--red-text: #ffb4ad;
+	--alert-bg: #39201d;
+	--alert-border: #5a2f2a;
+
+	--shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+	--shadow-lift: 0 10px 26px rgba(0, 0, 0, 0.46);
+
+	--date-ink: #bdaef0;
+	--summary-ink: #cabfea;
+	--queue-head-bg: #252046;
+	--queue-head-border: #342c5e;
+	--queue-title: #d9d2ff;
+	--queue-sub: #ab9fdb;
+	--queue-foot-bg: #221d40;
+	--step-todo: #3a3163;
+	--todo-sub: #d7b579;
+	--alert-title: #ffc2bb;
+	--alert-hint: #e8b2aa;
+	--stuck-text: #a7dcbd;
+	--primary-dark: #d9d2ff;
+	--muted-2: #a99fd0;
+	--orange-soft: #2c2042;
+	--orange-line: #4a2f22;
+	--step-todo-2: #3a3163;
+	--donut-track: #2a2348;
+	--ages-bg: #1e1939;
+	--req-head-bg: #2c2042;
+
+	--card-bg: #221c3c;
+}
+
+.page-container[data-page-route="task-manager"] {
+	transition: background 200ms ease;
+}
+
+/* ====================================================================== */
+/* Page shell                                                             */
+/* ====================================================================== */
+
+.task-manager {
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	color: var(--text);
+	font-family: Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
+	font-variant-numeric: tabular-nums;
+}
+
+.task-manager :focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--purple-300);
+	border-radius: 10px;
+}
+
+.task-manager button {
+	font-family: inherit;
+	cursor: pointer;
+}
+
+/* ====================================================================== */
+/* Header                                                                 */
+/* ====================================================================== */
+
+/* NOT `overflow: hidden`.
+ *
+ * The two decorative circles bleed past the header edges and used to be
+ * clipped by the header itself -- which also clipped the profile panel, an
+ * absolutely positioned box that hangs BELOW the header`s bottom edge. The
+ * panel opened and was immediately cut off at the header boundary.
+ *
+ * The clip now lives on `.tm-decor`, which wraps only the circles. The
+ * header keeps a stacking context so the panel paints over the stat cards
+ * that follow it in the document. */
+.task-manager .tm-header {
+	position: relative;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	flex-wrap: wrap;
+	padding: 28px 32px;
+	border: 1px solid var(--header-border);
+	border-radius: 20px;
+	background: var(--header-bg);
+}
+
+.task-manager .tm-decor {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	border-radius: 20px;
+	pointer-events: none;
+}
+
+.task-manager .tm-orb {
+	position: absolute;
+	border-radius: var(--border-radius-full);
+	background: #ffffff;
+	pointer-events: none;
+}
+
+.task-manager .tm-orb-1 {
+	width: 280px;
+	height: 280px;
+	top: -120px;
+	right: -60px;
+	opacity: 0.25;
+}
+
+.task-manager .tm-orb-2 {
+	width: 220px;
+	height: 220px;
+	bottom: -130px;
+	right: 170px;
+	opacity: 0.18;
+}
+
+.task-manager .tm-header-text {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.task-manager .tm-date {
+	margin: 0;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--date-ink);
+}
+
+.task-manager .tm-greeting {
+	margin: 0;
+	font-size: 32px;
+	line-height: 1.15;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	color: var(--purple-900);
+}
+
+.task-manager .tm-summary {
+	margin: 0;
+	font-size: 15px;
+	line-height: 1.5;
+	color: var(--summary-ink);
+}
+
+.task-manager .tm-summary b {
+	font-weight: 800;
+}
+
+.task-manager .tm-summary .tm-late {
+	color: var(--red-text);
+	font-weight: 800;
+}
+
+.task-manager .tm-header-actions {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+/* ---- buttons ---- */
+
+.task-manager .tm-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	flex-shrink: 0;
+	border: 1px solid var(--purple-200);
+	border-radius: 12px;
+	background: var(--card-bg);
+	color: var(--purple-700);
+	transition: background 140ms ease, border-color 140ms ease;
+}
+
+.task-manager .tm-icon-btn:hover {
+	background: var(--purple-50);
+	border-color: var(--purple-300);
+}
+
+.task-manager .tm-icon-btn svg {
+	width: 20px;
+	height: 20px;
+}
+
+.task-manager .tm-ico {
+	display: none;
+}
+
+.task-manager .tm-ico-moon {
+	fill: currentColor;
+	stroke: none;
+}
+
+.task-manager .tm-ico-sun circle {
+	fill: currentColor;
+}
+
+.task-manager .tm-ico-sun .tm-rays {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+}
+
+.task-manager .tm-icon-btn:not(.is-night) .tm-ico-moon,
+.task-manager .tm-icon-btn.is-night .tm-ico-sun {
+	display: block;
+}
+
+.task-manager .tm-cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 44px;
+	padding: 0 20px;
+	border: none;
+	border-radius: 12px;
+	background: var(--primary);
+	color: #ffffff;
+	font-size: 14px;
+	font-weight: 800;
+	box-shadow: 0 8px 20px rgba(67, 56, 202, 0.28);
+	transition: filter 140ms ease;
+}
+
+.task-manager .tm-cta:hover {
+	filter: brightness(1.08);
+}
+
+/* ---- profile pill ---- */
+
+.task-manager .tm-who {
+	position: relative;
+}
+
+.task-manager .tm-who-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	height: 44px;
+	padding: 0 16px 0 4px;
+	border: 1px solid var(--purple-200);
+	border-radius: var(--border-radius-full);
+	background: var(--card-bg);
+	color: var(--text);
+	font-size: 14px;
+	font-weight: 700;
+	transition: background 140ms ease, border-color 140ms ease;
+}
+
+.task-manager .tm-who-btn:hover,
+.task-manager .tm-who.is-open .tm-who-btn {
+	background: var(--purple-50);
+	border-color: var(--purple-300);
+}
+
+.task-manager .tm-avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: var(--border-radius-full);
+	background: var(--purple-100);
+	color: var(--purple-700);
+	font-size: 13px;
+	font-weight: 800;
+}
+
+.task-manager .tm-avatar-lg {
+	width: 44px;
+	height: 44px;
+	font-size: 15px;
+}
+
+.task-manager .tm-who-name {
+	white-space: nowrap;
+	max-width: 18ch;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.task-manager .tm-caret {
+	width: 0;
+	height: 0;
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 5px solid var(--purple-700);
+	transition: transform 140ms ease;
+}
+
+.task-manager .tm-who.is-open .tm-caret {
+	transform: rotate(180deg);
+}
+
+.task-manager .tm-who-panel {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	z-index: 30;
+	width: 320px;
+	max-width: 86vw;
+	padding: 16px;
+	border: 1px solid var(--purple-200);
+	border-radius: 18px;
+	background: var(--card-bg);
+	box-shadow: var(--shadow-lift);
+	color: var(--text);
+}
+
+.task-manager .tm-who-panel[hidden] {
+	display: none;
+}
+
+.task-manager .tm-who-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--purple-100);
+}
+
+.task-manager .tm-who-full {
+	font-size: 15px;
+	font-weight: 800;
+}
+
+.task-manager .tm-who-meta {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.task-manager .tm-who-group {
+	padding-top: 12px;
+}
+
+.task-manager .tm-who-key {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.task-manager .tm-who-count,
+.task-manager .tm-who-area {
+	color: var(--purple-700);
+}
+
+.task-manager .tm-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.task-manager .tm-chip {
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.8;
+	padding: 0 8px;
+	border-radius: var(--border-radius-full);
+	background: var(--purple-50);
+	border: 1px solid var(--purple-200);
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+.task-manager .tm-chip-muted {
+	opacity: 0.75;
+}
+
+.task-manager .tm-chip-scope {
+	background: var(--purple-100);
+	color: var(--purple-700);
+	font-weight: 700;
+}
+
+.task-manager .tm-who-note {
+	margin: 8px 0 0;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+/* ====================================================================== */
+/* Stat cards                                                             */
+/* ====================================================================== */
+
+.task-manager .tm-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+}
+
+.task-manager .tm-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 20px;
+	border: 1px solid var(--tint-border);
+	border-radius: 18px;
+	background: var(--tint-bg);
+	text-align: left;
+	transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.task-manager .tm-stat:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-lift);
+}
+
+.task-manager .tm-stat-needs_action {
+	--tint: var(--blue);
+	--tint-bg: var(--blue-bg);
+	--tint-border: var(--blue-border);
+	--tint-label: var(--blue-label);
+	--tint-num: var(--blue-num);
+}
+
+.task-manager .tm-stat-awaiting_others {
+	--tint: var(--orange);
+	--tint-bg: var(--orange-bg);
+	--tint-border: var(--orange-border);
+	--tint-label: var(--orange-label);
+	--tint-num: var(--orange-num);
+}
+
+.task-manager .tm-stat-approved_by_me {
+	--tint: var(--green);
+	--tint-bg: var(--green-bg);
+	--tint-border: var(--green-border);
+	--tint-label: var(--green-label);
+	--tint-num: var(--green-num);
+}
+
+.task-manager .tm-stat-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.task-manager .tm-stat-label {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--tint-label);
+}
+
+.task-manager .tm-tile {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	flex-shrink: 0;
+	border-radius: 12px;
+	background: var(--tint);
+	color: #ffffff;
+	box-shadow: 0 6px 14px color-mix(in srgb, var(--tint) 30%, transparent);
+}
+
+.task-manager .tm-tile svg {
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.task-manager .tm-stat-num {
+	font-size: 40px;
+	line-height: 1;
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	color: var(--tint-num);
+}
+
+.task-manager .tm-pill {
+	align-self: flex-start;
+	padding: 4px 10px;
+	border-radius: var(--border-radius-full);
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.task-manager .tm-pill-late {
+	background: var(--red);
+	color: #ffffff;
+}
+
+.task-manager .tm-pill-clear {
+	background: var(--green);
+	color: #ffffff;
+}
+
+/* ====================================================================== */
+/* Main area                                                              */
+/* ====================================================================== */
+
+/* Row A: the donut beside the list it describes.
+ *
+ * `align-items: stretch` is the whole fix for the floating-donut problem.
+ * Both cards are flex columns whose last part grows, so they close on the
+ * same line however long the list is -- the workload card fills with its
+ * age chart, the queue card with its rows. */
+.task-manager .tm-row-a {
+	display: grid;
+	grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+	gap: 16px;
+	align-items: stretch;
+}
+
+.task-manager .tm-col {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+}
+
+/* Every card in row A is a flex column, and the part that should absorb the
+ * slack carries `.tm-grow`. That is what keeps all three ending on one line
+ * however long the task list runs. */
+.task-manager .tm-card-grow {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.task-manager .tm-grow {
+	flex: 1;
+}
+
+/* ---- cards ---- */
+
+.task-manager .tm-card {
+	border: 1px solid var(--purple-200);
+	border-radius: 18px;
+	background: var(--card-bg);
+	box-shadow: var(--shadow);
+	overflow: hidden;
+	transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.task-manager .tm-card:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-lift);
+}
+
+.task-manager .tm-card-amber {
+	border-color: var(--amber-border);
+}
+
+.task-manager .tm-strip {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 18px 24px;
+	background: var(--strip-bg, transparent);
+	border-bottom: 1px solid var(--strip-border, var(--purple-100));
+}
+
+.task-manager .tm-strip-queue {
+	--strip-bg: var(--queue-head-bg);
+	--strip-border: var(--queue-head-border);
+	--strip-tile: var(--primary);
+	--strip-title: var(--queue-title);
+	--strip-sub: var(--queue-sub);
+}
+
+.task-manager .tm-strip-todo {
+	--strip-bg: var(--amber-bg);
+	--strip-border: var(--amber-border);
+	--strip-tile: var(--amber);
+	--strip-title: var(--amber-num);
+	--strip-sub: var(--todo-sub);
+}
+
+.task-manager .tm-strip-orange {
+	--strip-bg: var(--orange-bg);
+	--strip-border: var(--orange-border);
+	--strip-tile: var(--orange);
+	--strip-tile-ink: #ffffff;
+	--strip-title: var(--orange-num);
+	--strip-sub: var(--orange-label);
+}
+
+.task-manager .tm-strip-plain {
+	--strip-bg: transparent;
+	--strip-border: var(--purple-100);
+	--strip-tile: var(--primary);
+	--strip-title: var(--text);
+	--strip-sub: var(--text-muted);
+}
+
+.task-manager .tm-strip-tile {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: 10px;
+	background: var(--strip-tile, var(--purple-100));
+	color: var(--strip-tile-ink, var(--purple-700));
+}
+
+.task-manager .tm-strip-tile svg {
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.task-manager .tm-strip-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.task-manager .tm-strip-title {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 800;
+	color: var(--strip-title);
+}
+
+.task-manager .tm-strip-sub {
+	margin: 2px 0 0;
+	font-size: 12px;
+	color: var(--strip-sub, var(--muted-2));
+}
+
+/* The status line above the queue header. It reports on the list below it,
+ * so it belongs to that card rather than to a card of its own. */
+.task-manager .tm-status {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 24px;
+	background: var(--status-bg);
+	border-bottom: 1px solid var(--status-border);
+	font-size: 13px;
+	color: var(--status-ink);
+}
+
+.task-manager .tm-status-green {
+	--status-bg: var(--green-bg);
+	--status-border: var(--green-border);
+	--status-tile: var(--green);
+	--status-ink: var(--stuck-text);
+	--status-strong: var(--green-num);
+}
+
+.task-manager .tm-status-red {
+	--status-bg: var(--red-bg);
+	--status-border: var(--alert-border);
+	--status-tile: var(--red);
+	--status-ink: var(--alert-hint);
+	--status-strong: var(--red-text);
+}
+
+.task-manager .tm-status-tile {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	flex-shrink: 0;
+	border-radius: 8px;
+	background: var(--status-tile);
+	color: #ffffff;
+}
+
+.task-manager .tm-status-tile svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.task-manager .tm-status-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.task-manager .tm-status-text b {
+	font-weight: 800;
+	color: var(--status-strong);
+}
+
+.task-manager .tm-status-link {
+	flex-shrink: 0;
+	height: 32px;
+	padding: 0 12px;
+	border: 1px solid var(--status-border);
+	border-radius: 9px;
+	background: var(--card-bg);
+	font-size: 13px;
+	font-weight: 800;
+	color: var(--status-strong);
+	transition: background 140ms ease;
+}
+
+.task-manager .tm-status-link:hover {
+	background: var(--status-bg);
+}
+
+/* ====================================================================== */
+/* Tabs                                                                   */
+/* ====================================================================== */
+
+.task-manager .tm-tabbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+	padding: 14px 24px;
+	background: var(--list-head);
+	border-bottom: 1px solid var(--list-head-border);
+}
+
+/* A segmented control rather than two links: the two lists are alternatives,
+ * and a control that looks like a switch says so without a caption. */
+.task-manager .tm-tabs {
+	display: flex;
+	gap: 4px;
+	padding: 4px;
+	border: 1px solid var(--purple-200);
+	border-radius: 12px;
+	background: var(--card-bg);
+}
+
+.task-manager .tm-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 40px;
+	padding: 0 14px;
+	border: none;
+	border-radius: 9px;
+	background: transparent;
+	color: var(--purple-700);
+	font-size: 14px;
+	font-weight: 800;
+	white-space: nowrap;
+	transition: background 140ms ease, color 140ms ease;
+}
+
+.task-manager .tm-tab:hover {
+	background: var(--purple-50);
+}
+
+.task-manager .tm-tab-count {
+	min-width: 20px;
+	padding: 1px 7px;
+	border-radius: var(--border-radius-full);
+	background: var(--purple-100);
+	font-size: 12px;
+	font-weight: 800;
+}
+
+/* The active tab takes the colour of the list it opens -- blue work is
+ * primary, stuck work is green -- so the control says which of the two you
+ * are looking at without reading the labels. */
+.task-manager .tm-tab.is-on[data-tab="needs_action"] {
+	background: var(--primary);
+	color: #ffffff;
+}
+
+.task-manager .tm-tab.is-on[data-tab="approved_by_me"] {
+	background: var(--green);
+	color: #ffffff;
+}
+
+.task-manager .tm-tab.is-on .tm-tab-count {
+	background: rgba(255, 255, 255, 0.22);
+	color: #ffffff;
+}
+
+.task-manager .tm-tab-hint {
+	margin: 0;
+	font-size: 13px;
+	color: var(--queue-sub);
+}
+
+/* "9 pending" and "200" -- the size of the list, parked at the end of its
+ * own header rather than repeated inside every row. */
+.task-manager .tm-count-chip {
+	flex-shrink: 0;
+	padding: 5px 12px;
+	border: 1px solid var(--purple-200);
+	border-radius: var(--border-radius-full);
+	background: var(--card-bg);
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--queue-title);
+	white-space: nowrap;
+}
+
+.task-manager .tm-chip-orange {
+	border-color: var(--orange-border);
+	color: var(--orange-num);
+}
+
+.task-manager .tm-tile-red {
+	background: var(--red);
+}
+
+/* ====================================================================== */
+/* Rows                                                                   */
+/* ====================================================================== */
+
+.task-manager .tm-row {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 24px;
+	transition: background 140ms ease;
+}
+
+.task-manager .tm-row + .tm-row {
+	border-top: 1px solid var(--row-divider, var(--purple-100));
+}
+
+.task-manager .tm-row:hover {
+	background: var(--purple-50);
+}
+
+.task-manager .tm-rank {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	border-radius: 10px;
+	background: var(--purple-100);
+	color: var(--purple-700);
+	font-size: 13px;
+	font-weight: 800;
+}
+
+.task-manager .tm-rank-first {
+	background: var(--red);
+	color: #ffffff;
+}
+
+.task-manager .tm-row-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.task-manager .tm-row-top {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.task-manager .tm-tag {
+	padding: 3px 8px;
+	border-radius: 6px;
+	background: #7c3aed;
+	color: #ffffff;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.task-manager .tm-id {
+	font-size: 15px;
+	font-weight: 800;
+	color: var(--text);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.task-manager .tm-id:hover {
+	color: var(--primary);
+	text-decoration: underline;
+}
+
+.task-manager .tm-meta {
+	margin-top: 4px;
+	font-size: 13px;
+	color: var(--text-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.task-manager .tm-steps {
+	display: flex;
+	gap: 4px;
+	margin-top: 8px;
+	max-width: 220px;
+}
+
+.task-manager .tm-steps {
+	max-width: 200px;
+}
+
+.task-manager .tm-step {
+	flex: 1;
+	height: 6px;
+	border-radius: var(--border-radius-full);
+	background: var(--step-todo-2);
+}
+
+.task-manager .tm-step-done {
+	background: var(--green);
+}
+
+.task-manager .tm-step-now {
+	background: var(--amber);
+}
+
+.task-manager .tm-row-side {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-shrink: 0;
+}
+
+.task-manager .tm-age {
+	padding: 5px 10px;
+	border-radius: var(--border-radius-full);
+	background: var(--red-bg);
+	color: var(--red-text);
+	font-size: 12px;
+	font-weight: 800;
+	white-space: nowrap;
+}
+
+.task-manager .tm-rank-stuck {
+	background: var(--red-bg);
+	color: var(--red-text);
+}
+
+.task-manager .tm-tag-stuck {
+	background: var(--red);
+}
+
+.task-manager .tm-step-stuck {
+	background: var(--red);
+}
+
+.task-manager .tm-follow {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	height: 40px;
+	padding: 0 14px;
+	border: 1px solid var(--alert-border);
+	border-radius: 10px;
+	background: var(--card-bg);
+	color: var(--red-text);
+	font-size: 14px;
+	font-weight: 800;
+	transition: background 140ms ease, border-color 140ms ease;
+}
+
+.task-manager .tm-follow:hover {
+	background: var(--alert-bg);
+	border-color: var(--red);
+}
+
+.task-manager .tm-follow svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* The empty state for either tab. Nothing stuck is good news, so it reads
+ * as a result rather than as a gap. */
+.task-manager .tm-blank {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 36px 24px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--green-num);
+}
+
+.task-manager .tm-blank-tile {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
+	background: var(--green);
+	color: #ffffff;
+}
+
+.task-manager .tm-blank-tile svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.task-manager .tm-review {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+	padding: 0 16px;
+	border: none;
+	border-radius: 10px;
+	background: var(--primary);
+	color: #ffffff;
+	font-size: 14px;
+	font-weight: 800;
+	transition: filter 140ms ease;
+}
+
+.task-manager .tm-review:hover {
+	filter: brightness(1.08);
+}
+
+/* ====================================================================== */
+/* Pager                                                                  */
+/* ====================================================================== */
+
+.task-manager .tm-pager {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding: 14px 24px;
+	border-top: 1px solid var(--purple-100);
+	background: var(--queue-foot-bg);
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--queue-sub);
+}
+
+.task-manager .tm-pager[hidden] {
+	display: none;
+}
+
+.task-manager .tm-pager-btns {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.task-manager .tm-page {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 36px;
+	height: 36px;
+	padding: 0 10px;
+	border: 1px solid var(--purple-200);
+	border-radius: 9px;
+	background: var(--card-bg);
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--text-muted);
+	transition: background 140ms ease, border-color 140ms ease;
+}
+
+.task-manager .tm-page:hover:not(:disabled) {
+	background: var(--purple-50);
+	border-color: var(--purple-300);
+}
+
+.task-manager .tm-page:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.task-manager .tm-page.is-current {
+	background: var(--primary);
+	border-color: var(--primary);
+	color: #ffffff;
+	box-shadow: 0 4px 10px rgba(67, 56, 202, 0.3);
+}
+
+.task-manager .tm-page:disabled {
+	border-color: var(--purple-100);
+	color: var(--purple-300);
+	cursor: not-allowed;
+}
+
+/* Paging swaps the rows under a fixed header and footer, so the only thing
+ * that should move is the text. */
+.task-manager .tm-fade {
+	animation: tm-fade 150ms ease;
+}
+
+@keyframes tm-fade {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+/* The orange list keeps its own accent on the current page, so the two
+ * pagers never look like the same control. */
+.task-manager .tm-pager-orange {
+	background: var(--orange-soft);
+	border-top-color: var(--orange-line);
+	color: var(--orange-label);
+}
+
+.task-manager .tm-pager-orange .tm-page {
+	border-color: var(--orange-border);
+	color: var(--orange-label);
+}
+
+.task-manager .tm-pager-orange .tm-page.is-current {
+	background: var(--orange);
+	border-color: var(--orange);
+	color: #ffffff;
+	box-shadow: 0 4px 10px rgba(234, 106, 42, 0.3);
+}
+
+.task-manager .tm-page-gap {
+	padding: 0 2px;
+	color: var(--text-muted);
+}
+
+.task-manager .tm-empty {
+	padding: 28px 24px;
+	text-align: center;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+/* ====================================================================== */
+/* Workload: donut and legend                                             */
+/* ====================================================================== */
+
+.task-manager .tm-total-wrap {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+.task-manager .tm-total {
+	font-size: 22px;
+	font-weight: 800;
+	color: var(--primary-dark);
+}
+
+.task-manager .tm-total-label {
+	font-size: 13px;
+	color: var(--text-muted);
+}
+
+.task-manager .tm-workload {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 24px;
+	flex-wrap: wrap;
+	padding: 24px;
+}
+
+.task-manager .tm-donut-wrap {
+	position: relative;
+	width: 168px;
+	height: 168px;
+	flex-shrink: 0;
+	margin: 0 auto;
+}
+
+.task-manager .tm-donut {
+	width: 100%;
+	height: 100%;
+	/* Arcs start at twelve oclock, which is where a reader starts. */
+	transform: rotate(-90deg);
+}
+
+/* The ring the arcs are drawn on. Without it a two-slice donut with gaps
+ * reads as two floating bands rather than as a divided whole. */
+.task-manager .tm-donut-track {
+	fill: none;
+	stroke: var(--donut-track);
+}
+
+.task-manager .tm-arc {
+	fill: none;
+	/* The sweep-in: dasharray is animated up from zero by the controller on
+	 * the frame after mount. */
+	transition: stroke-dasharray 600ms cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 140ms ease;
+}
+
+/* One rule per list, same four hues as the legend swatches. */
+.task-manager .tm-arc-needs_action {
+	stroke: var(--blue);
+}
+
+.task-manager .tm-arc-awaiting_others {
+	stroke: var(--orange);
+}
+
+.task-manager .tm-arc-todo {
+	stroke: var(--amber);
+}
+
+.task-manager .tm-arc-approved_by_me {
+	stroke: var(--green);
+}
+
+.task-manager .tm-donut.is-hovering .tm-arc {
+	opacity: 0.3;
+}
+
+.task-manager .tm-donut.is-hovering .tm-arc.is-active {
+	opacity: 1;
+}
+
+.task-manager .tm-donut-centre {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.task-manager .tm-donut-total {
+	font-size: 30px;
+	line-height: 1;
+	font-weight: 800;
+	color: var(--text);
+}
+
+.task-manager .tm-donut-label {
+	margin-top: 3px;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.task-manager .tm-legend {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	min-width: 0;
+}
+
+.task-manager .tm-leg {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 14px;
+	color: var(--text);
+	white-space: nowrap;
+}
+
+.task-manager .tm-leg-needs_action {
+	--tint: var(--blue);
+}
+
+.task-manager .tm-leg-awaiting_others {
+	--tint: var(--orange);
+}
+
+.task-manager .tm-leg-approved_by_me {
+	--tint: var(--green);
+}
+
+.task-manager .tm-leg-swatch {
+	width: 12px;
+	height: 12px;
+	flex-shrink: 0;
+	border-radius: 4px;
+	background: var(--tint);
+}
+
+/* The breakdown table fills its own card and sits centred in it, so a
+ * three-row table does not hug the top of a tall box. */
+.task-manager .tm-table-wrap {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 10px 24px 18px;
+	min-width: 0;
+}
+
+/* Separate borders with vertical spacing is what lets each row be its own
+ * rounded, tinted block rather than a stripe in a grid. */
+.task-manager .tm-table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 6px;
+	font-size: 13px;
+}
+
+.task-manager .tm-table th {
+	padding: 0 10px 2px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	text-align: left;
+}
+
+.task-manager .tm-table th.tm-num,
+.task-manager .tm-table td.tm-num {
+	text-align: right;
+}
+
+.task-manager .tm-table td {
+	padding: 9px 10px;
+	background: var(--tint-bg);
+	color: var(--text);
+}
+
+.task-manager .tm-table td:first-child {
+	border-radius: 10px 0 0 10px;
+}
+
+.task-manager .tm-table td:last-child {
+	border-radius: 0 10px 10px 0;
+}
+
+.task-manager .tm-row-needs_action {
+	--tint: var(--blue);
+	--tint-bg: var(--blue-bg);
+	--tint-label: var(--blue-label);
+}
+
+.task-manager .tm-row-awaiting_others {
+	--tint: var(--orange);
+	--tint-bg: var(--orange-bg);
+	--tint-label: var(--orange-label);
+}
+
+.task-manager .tm-row-approved_by_me {
+	--tint: var(--green);
+	--tint-bg: var(--green-bg);
+	--tint-label: var(--green-label);
+}
+
+.task-manager .tm-row-todo {
+	--tint: var(--amber);
+	--tint-bg: var(--amber-bg);
+	--tint-label: var(--amber-label);
+}
+
+.task-manager .tm-table .tm-list-cell {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.task-manager .tm-swatch {
+	width: 10px;
+	height: 10px;
+	flex-shrink: 0;
+	border-radius: 3px;
+	background: var(--tint);
+}
+
+.task-manager .tm-table .tm-items {
+	font-weight: 800;
+}
+
+.task-manager .tm-table .tm-share {
+	font-weight: 700;
+	color: var(--tint-label);
+}
+
+.task-manager .tm-table .tm-oldest {
+	font-weight: 700;
+	color: var(--red-text);
+}
+
+.task-manager .tm-table .tm-oldest-none {
+	color: var(--text-muted);
+	font-weight: 600;
+}
+
+/* The highlight is one ring around the row, not a box around every cell.
+ *
+ * `inset 0 0 0 1.5px` on each `td` outlines each cell independently, which
+ * draws a line at every column boundary -- the row ends up looking like four
+ * joined boxes. Only the outer edges are drawn instead: top and bottom on
+ * every cell, the left edge on the first and the right edge on the last.
+ * The insets follow each cell`s own border-radius, so the ends stay round.
+ */
+.task-manager .tm-table tr.is-active td {
+	box-shadow: inset 0 1.5px 0 0 var(--tint), inset 0 -1.5px 0 0 var(--tint);
+}
+
+.task-manager .tm-table tr.is-active td:first-child {
+	box-shadow: inset 0 1.5px 0 0 var(--tint), inset 0 -1.5px 0 0 var(--tint),
+		inset 1.5px 0 0 0 var(--tint);
+}
+
+.task-manager .tm-table tr.is-active td:last-child {
+	box-shadow: inset 0 1.5px 0 0 var(--tint), inset 0 -1.5px 0 0 var(--tint),
+		inset -1.5px 0 0 0 var(--tint);
+}
+
+/* ====================================================================== */
+/* Your requests                                                          */
+/* ====================================================================== */
+
+.task-manager .tm-table-scroll {
+	/* A four-column table does not fold. Let it scroll inside its own card
+	 * rather than pushing the page sideways. */
+	overflow-x: auto;
+}
+
+.task-manager .tm-req-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.task-manager .tm-req-table th {
+	padding: 10px 24px;
+	background: var(--req-head-bg);
+	border-bottom: 1px solid var(--purple-100);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--orange-label);
+	text-align: left;
+	white-space: nowrap;
+}
+
+.task-manager .tm-req-table th.tm-num,
+.task-manager .tm-req-table td.tm-num {
+	text-align: right;
+}
+
+.task-manager .tm-req-table td {
+	padding: 12px 24px;
+	border-bottom: 1px solid var(--purple-100);
+	vertical-align: middle;
+}
+
+.task-manager .tm-req-table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+.task-manager .tm-req-table tbody tr:hover {
+	background: var(--purple-50);
+}
+
+.task-manager .tm-status-pill {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: var(--border-radius-full);
+	background: var(--orange-bg);
+	border: 1px solid var(--orange-border);
+	color: var(--orange-label);
+	font-size: 12px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.task-manager .tm-wait-pill {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: var(--border-radius-full);
+	background: var(--red-bg);
+	color: var(--red-text);
+	font-size: 12px;
+	font-weight: 800;
+	white-space: nowrap;
+}
+
+.task-manager .tm-req-id {
+	font-size: 14px;
+	font-weight: 800;
+	color: var(--text);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.task-manager .tm-req-id:hover {
+	color: var(--primary);
+	text-decoration: underline;
+}
+
+.task-manager .tm-req-meta {
+	margin-top: 3px;
+	font-size: 12px;
+	color: var(--text-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.task-manager .tm-tag {
+	flex-shrink: 0;
+	padding: 3px 8px;
+	border-radius: var(--border-radius-full);
+	border: 1px solid var(--purple-200);
+	background: var(--purple-50);
+	font-size: 11px;
+	font-weight: 800;
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+/* ====================================================================== */
+/* Skeleton                                                               */
+/* ====================================================================== */
+
+.task-manager .tm-skeleton {
+	padding: 18px 24px;
+}
+
+.task-manager .tm-skel {
+	height: 52px;
+	border-radius: 12px;
+	background: linear-gradient(
+		90deg,
+		var(--purple-50) 25%,
+		var(--purple-100) 37%,
+		var(--purple-50) 63%
+	);
+	background-size: 400% 100%;
+	animation: tm-shimmer 1.3s ease infinite;
+}
+
+.task-manager .tm-skel + .tm-skel {
+	margin-top: 8px;
+}
+
+@keyframes tm-shimmer {
+	0% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0 50%;
+	}
+}
+
+/* ====================================================================== */
+/* Desk chrome                                                            */
+/* ====================================================================== */
+
+/* The page draws its own header, and the navbar belongs to the desk rather
+ * than to this page. `--navbar-height: 0` is the half that is easy to miss:
+ * `.page-head` is sticky at that offset and the desk sizes content with
+ * `calc(100vh - var(--navbar-height))`, so hiding the bar without zeroing
+ * the token leaves a gap where it used to be. Scoped to `data-route`, which
+ * Frappe restamps on <body> at every page change. */
+body[data-route="task-manager"] {
+	--navbar-height: 0px;
+}
+
+body[data-route="task-manager"] .navbar,
+.page-container[data-page-route="task-manager"] .page-head {
+	display: none;
+}
+
+/* Raven appends a `.raven-chat` dock into `.main-section` on every desk page
+ * and sets `padding-bottom: 60px` on that section inline. Both are global.
+ * The padding needs `!important` because an inline style outranks selectors. */
+body[data-route="task-manager"] .raven-chat {
+	display: none;
+}
+
+body[data-route="task-manager"] .main-section {
+	padding-bottom: 0 !important;
+}
+
+/* ====================================================================== */
+/* Responsive                                                             */
+/* ====================================================================== */
+
+@media (max-width: 1000px) {
+	.task-manager .tm-row-a {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.task-manager .tm-workload {
+		flex-direction: column;
+	}
+}
+
+@media (max-width: 768px) {
+	.task-manager {
+		padding: 16px;
+		gap: 16px;
+	}
+
+	.task-manager .tm-header {
+		padding: 20px;
+	}
+
+	.task-manager .tm-greeting {
+		font-size: 26px;
+	}
+
+	.task-manager .tm-header-actions {
+		width: 100%;
+	}
+
+	.task-manager .tm-cta {
+		flex: 1;
+	}
+
+	/* Donut above its legend. */
+	.task-manager .tm-workload {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.task-manager .tm-row {
+		flex-wrap: wrap;
+		padding: 16px;
+	}
+
+	.task-manager .tm-row-side {
+		width: 100%;
+		justify-content: space-between;
+		padding-left: 46px;
+	}
+
+	.task-manager .tm-strip,
+	.task-manager .tm-req {
+		padding: 16px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.task-manager *,
+	.task-manager *::before,
+	.task-manager *::after {
+		transition: none !important;
+		animation: none !important;
+	}
+
+	.task-manager .tm-card:hover,
+	.task-manager .tm-stat:hover {
+		transform: none;
+	}
+}

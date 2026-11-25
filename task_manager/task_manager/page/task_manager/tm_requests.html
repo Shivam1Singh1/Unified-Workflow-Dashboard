@@ -1,0 +1,26 @@
+<!--
+	"Your requests" -- everything this reader raised that is still open, as a
+	table: what it is, where it got to, which step, and who is sitting on it.
+
+	A draft is a request on a submittable doctype with no workflow at all,
+	which the reader created and never submitted. Nobody else is holding it,
+	so its Waiting column names the reader.
+
+	See task_manager.html for the no-apostrophe and escaping rules.
+-->
+{% for row in rows %}
+<tr>
+	<td>
+		<a class="tm-req-id" data-open data-doctype="{{ row.doctype }}" data-name="{{ row.name }}">{{ row.name }}</a>
+	</td>
+	<td><span class="tm-status-pill">{{ row.status }}</span></td>
+	<td>{{ row.step }}</td>
+	<td class="tm-num"><span class="tm-wait-pill">{{ row.age_label }}</span></td>
+</tr>
+{% endfor %}
+
+{% if not rows.length %}
+<tr>
+	<td colspan="4"><div class="tm-empty">{{ empty_text }}</div></td>
+</tr>
+{% endif %}

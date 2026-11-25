@@ -1,0 +1,17 @@
+<!--
+	The three lists, as a strip of tinted cards. Each tile is a button that
+	jumps to the card holding that list; the tint comes from the
+	`tm-stat-{key}` modifier and nothing inside names a colour of its own.
+
+	See task_manager.html for the no-apostrophe and escaping rules.
+-->
+{% for tile in tiles %}
+<button class="tm-stat tm-stat-{{ tile.key }}" type="button" data-jump="{{ tile.key }}">
+	<span class="tm-stat-head">
+		<span class="tm-stat-label">{{ tile.label }}</span>
+		<span class="tm-tile" aria-hidden="true">{{ tile.icon }}</span>
+	</span>
+	<span class="tm-stat-num">{{ tile.value }}</span>
+	<span class="tm-pill tm-pill-{{ tile.pill_kind }}">{{ tile.pill }}</span>
+</button>
+{% endfor %}

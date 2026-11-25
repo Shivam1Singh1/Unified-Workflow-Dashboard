@@ -1,0 +1,60 @@
+<!--
+	Identity and scope, behind a button.
+
+	Answers the two questions the page kept raising and never addressed: why
+	am I seeing this work (roles), and why am I not seeing that work (scope).
+	Both are reference -- read once, then never again -- so they live in a
+	panel the reader opens, not in a band that costs height above the queue
+	every single load.
+
+	See task_manager.html for the no-apostrophe and escaping rules.
+-->
+<button
+	class="tm-who-btn"
+	type="button"
+	data-action="profile"
+	aria-expanded="false"
+	aria-controls="tm-profile-panel"
+	title="Your roles and what this page covers"
+>
+	<span class="tm-avatar">{{ initials }}</span>
+	<span class="tm-who-name">{{ full_name }}</span>
+	<span class="tm-caret" aria-hidden="true"></span>
+</button>
+
+<div class="tm-who-panel" id="tm-profile-panel" data-profile-panel tabindex="-1" role="group" aria-label="Your roles and coverage" hidden>
+
+	<div class="tm-who-head">
+		<span class="tm-avatar tm-avatar-lg">{{ initials }}</span>
+		<div>
+			<div class="tm-who-full">{{ full_name }}</div>
+			{% if meta %}<div class="tm-who-meta">{{ meta }}</div>{% endif %}
+		</div>
+	</div>
+
+	<div class="tm-who-group">
+		<div class="tm-who-key">Your roles<span class="tm-who-count">{{ roles_total }}</span></div>
+		<div class="tm-chips">
+			{% for role in roles %}
+			<span class="tm-chip">{{ role }}</span>
+			{% endfor %}
+			{% if roles_more %}
+			<span class="tm-chip tm-chip-muted">{{ roles_more }}</span>
+			{% endif %}
+			{% if not roles.length %}
+			<span class="tm-chip tm-chip-muted">None</span>
+			{% endif %}
+		</div>
+	</div>
+
+	<div class="tm-who-group">
+		<div class="tm-who-key">Covering <span class="tm-who-area">{{ area }}</span></div>
+		<div class="tm-chips">
+			{% for item in doctypes %}
+			<span class="tm-chip tm-chip-scope">{{ item }}</span>
+			{% endfor %}
+		</div>
+		<p class="tm-who-note">{{ note }}</p>
+	</div>
+
+</div>
